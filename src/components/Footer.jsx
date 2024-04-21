@@ -4,9 +4,9 @@ import { FaLinkedin } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <div className="bg-[#272932] flex flex-col items-center justify-center p-2 mt-16">
+    <div className="bg-[#272932] flex flex-col items-center justify-center p-2 mt-16  w-full bottom-0">
       <div className="text-2xl font-bold text-white">
-        <span className="text-green-400">Pass</span>Man*
+        <span className="text-cyan-400">Pass</span>Man*
       </div>
       <p className="text-white text-md">Created by Samir Tiwari</p>
       <div className="flex gap-3 invert text-lg m-2">
