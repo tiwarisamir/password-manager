@@ -3,17 +3,22 @@ import { BiSave } from "react-icons/bi";
 import { IoEye } from "react-icons/io5";
 import { IoEyeOff } from "react-icons/io5";
 import { MdOutlineContentCopy } from "react-icons/md";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { FaRegEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
 import { v4 as uuidv4 } from "uuid";
+import toast, { Toaster } from "react-hot-toast";
 
 const Manager = () => {
   const [show, setshow] = useState(false);
   const passwordRef = useRef();
-  const [form, setform] = useState({ site: "", username: "", password: "" });
+  const [form, setform] = useState({
+    site: "",
+    username: "",
+    password: "",
+    showPassword: false,
+  });
   const [passwordArray, setpasswordArray] = useState([]);
+  // const [showTablePassword, setshowTablePassword] = useState(form.showPassword);
 
   useEffect(() => {
     let passwords = localStorage.getItem("passwords");
@@ -23,11 +28,11 @@ const Manager = () => {
   }, []);
 
   const handelShow = () => {
-    const newShowState = !show;
-    setshow(newShowState);
-    if (passwordRef.current) {
-      passwordRef.current.type = newShowState ? "text" : "password";
-    }
+    // const newShowState = !show;
+    // setshow(newShowState);
+    // if (passwordRef.current) {
+    //   passwordRef.current.type = newShowState ? "text" : "password";
+    // }
   };
 
   const handleChange = (e) => {
@@ -35,35 +40,24 @@ const Manager = () => {
   };
 
   const handleSave = () => {
-    toast.success("Password added successfully", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
-    setpasswordArray([...passwordArray, { ...form, id: uuidv4() }]);
-    localStorage.setItem(
-      "passwords",
-      JSON.stringify([...passwordArray, { ...form, id: uuidv4() }])
-    );
-    setform({ site: "", username: "", password: "" });
+    if (
+      form.site.length != 0 &&
+      form.username.length != 0 &&
+      form.password.length != 0
+    ) {
+      toast.success("Password added successfully");
+
+      setpasswordArray([...passwordArray, { ...form, id: uuidv4() }]);
+      localStorage.setItem(
+        "passwords",
+        JSON.stringify([...passwordArray, { ...form, id: uuidv4() }])
+      );
+      setform({ site: "", username: "", password: "" });
+    }
   };
 
   const handleDelete = (id) => {
-    toast.warn("Password Deleted!!!", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "dark",
-    });
+    toast.error("Password Deleted!!!");
     let conf = confirm("Do you really wnat to delete password?");
     if (conf) {
       setpasswordArray(passwordArray.filter((item) => item.id != id));
@@ -80,35 +74,23 @@ const Manager = () => {
   };
 
   const copyText = (text) => {
-    toast("Copied to clipboard", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+    toast.success("Copied to clipboard");
     navigator.clipboard.writeText(text);
+  };
+
+  const handleTablePassword = (id) => {
+    setpasswordArray((prevPasswords) =>
+      prevPasswords.map((item) =>
+        item.id === id ? { ...item, showPassword: !item.showPassword } : item
+      )
+    );
   };
 
   return (
     <>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-
-      <ToastContainer />
+      <div>
+        <Toaster />
+      </div>
       <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
         <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg--400 opacity-20 blur-[100px]"></div>
       </div>
@@ -198,11 +180,23 @@ const Manager = () => {
                       </td>
                       <td className="text-center w-32 py-2 border border-white">
                         <div className="flex justify-center items-center gap-3">
-                          <span> {item.password}</span>
+                          {item.showPassword && <span> {item.password}</span>}
+                          {!item.showPassword && (
+                            <span className="font-bold">
+                              {"*".repeat(item.password.length)}
+                            </span>
+                          )}
+
                           <MdOutlineContentCopy
                             className="cursor-pointer"
                             onClick={() => copyText(item.password)}
                           />
+                          <span
+                            className="cursor-pointer"
+                            onClick={() => handleTablePassword(item.id)}
+                          >
+                            {item.showPassword ? <IoEyeOff /> : <IoEye />}
+                          </span>
                         </div>
                       </td>
                       <td className="text-center w-32 py-2 border border-white">
