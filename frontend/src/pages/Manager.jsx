@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { BiSave } from "react-icons/bi";
 import { IoEye } from "react-icons/io5";
 import { IoEyeOff } from "react-icons/io5";
 import { MdOutlineContentCopy } from "react-icons/md";
 import { FaRegEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
-import { v4 as uuidv4 } from "uuid";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { Context } from "../store/store";
+import { Navigate } from "react-router-dom";
+import axios from "axios";
+import { server } from "../main";
 
 const Manager = () => {
   const [show, setshow] = useState(false);
@@ -15,62 +18,119 @@ const Manager = () => {
     site: "",
     username: "",
     password: "",
-    showPassword: false,
   });
   const [passwordArray, setpasswordArray] = useState([]);
-  // const [showTablePassword, setshowTablePassword] = useState(form.showPassword);
+  const { isAuth, login } = useContext(Context);
+  const [refresh, setrefresh] = useState(false);
+  const [isUpdate, setisUpdate] = useState(false);
+  const [toUpdateID, settoUpdateID] = useState("");
 
   useEffect(() => {
-    let passwords = localStorage.getItem("passwords");
-    if (passwords) {
-      setpasswordArray(JSON.parse(passwords));
-    }
-  }, []);
+    axios
+      .get(`${server}password/my`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        setpasswordArray(res.data.password);
+      })
+      .catch((err) => {
+        toast.error(err.response.data.message);
+      });
+  }, [refresh]);
 
   const handelShow = () => {
-    // const newShowState = !show;
-    // setshow(newShowState);
-    // if (passwordRef.current) {
-    //   passwordRef.current.type = newShowState ? "text" : "password";
-    // }
+    const newShowState = !show;
+    setshow(newShowState);
+    if (passwordRef.current) {
+      passwordRef.current.type = newShowState ? "text" : "password";
+    }
   };
 
   const handleChange = (e) => {
     setform({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (
       form.site.length != 0 &&
       form.username.length != 0 &&
       form.password.length != 0
     ) {
-      toast.success("Password added successfully");
-
-      setpasswordArray([...passwordArray, { ...form, id: uuidv4() }]);
-      localStorage.setItem(
-        "passwords",
-        JSON.stringify([...passwordArray, { ...form, id: uuidv4() }])
-      );
-      setform({ site: "", username: "", password: "" });
+      try {
+        const { data } = await axios.post(
+          `${server}password/new`,
+          {
+            site: form.site,
+            username: form.username,
+            password: form.password,
+          },
+          {
+            withCredentials: true,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setform({ site: "", username: "", password: "" });
+        toast.success(data.message);
+        setrefresh(!refresh);
+      } catch (error) {
+        toast.error(error.response.data.message);
+      }
+    } else {
+      toast.error("Enter site, username and password first!!");
     }
   };
 
-  const handleDelete = (id) => {
-    toast.error("Password Deleted!!!");
+  const handleDelete = async (id) => {
     let conf = confirm("Do you really wnat to delete password?");
     if (conf) {
-      setpasswordArray(passwordArray.filter((item) => item.id != id));
-      localStorage.setItem(
-        "passwords",
-        JSON.stringify(passwordArray.filter((item) => item.id != id))
-      );
+      try {
+        const { data } = await axios.delete(`${server}password/${id}`, {
+          withCredentials: true,
+        });
+        toast.success(data.message);
+        setrefresh(!refresh);
+      } catch (error) {
+        toast.success(error.response.data.message);
+      }
     }
   };
 
   const handleEdit = (id) => {
-    setform(passwordArray.filter((item) => item.id === id)[0]);
-    setpasswordArray(passwordArray.filter((item) => item.id != id));
+    setform(passwordArray.filter((item) => item._id === id)[0]);
+    setpasswordArray(passwordArray.filter((item) => item._id != id));
+    setisUpdate(true);
+    settoUpdateID(id);
+  };
+
+  const handleUpdate = async () => {
+    if (
+      form.site.length != 0 &&
+      form.username.length != 0 &&
+      form.password.length != 0
+    ) {
+      try {
+        const { data } = await axios.put(
+          `${server}password/${toUpdateID}`,
+          {
+            site: form.site,
+            username: form.username,
+            password: form.password,
+          },
+          {
+            withCredentials: true,
+          }
+        );
+        setform({ site: "", username: "", password: "" });
+        toast.success(data.message);
+        setrefresh(!refresh);
+      } catch (error) {
+        toast.error(error.response.data.message);
+      }
+    } else {
+      toast.error("Enter site, username and password first!!");
+    }
   };
 
   const copyText = (text) => {
@@ -78,22 +138,24 @@ const Manager = () => {
     navigator.clipboard.writeText(text);
   };
 
-  const handleTablePassword = (id) => {
-    setpasswordArray((prevPasswords) =>
-      prevPasswords.map((item) =>
-        item.id === id ? { ...item, showPassword: !item.showPassword } : item
-      )
-    );
+  const handleTablePassword = async (id) => {
+    try {
+      const { data } = await axios.put(
+        `${server}password/${id}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      setrefresh(!refresh);
+    } catch (error) {}
   };
+
+  if (!isAuth) return <Navigate to={"/login"} />;
 
   return (
     <>
-      <div>
-        <Toaster />
-      </div>
-      <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg--400 opacity-20 blur-[100px]"></div>
-      </div>
       <div className="max-w-4xl p-5  mx-auto min-h-[83.7vh]">
         <div className=" text-center py-10">
           <div className="text-3xl font-bold">
@@ -111,6 +173,7 @@ const Manager = () => {
             className="myInput "
             placeholder="Enter website URL"
             name="site"
+            required
           />
           <div className="flex flex-col gap-2 md:flex-row w-full">
             <input
@@ -120,6 +183,7 @@ const Manager = () => {
               className="myInput "
               placeholder="Enter username"
               name="username"
+              required
             />
             <div className="relative w-full">
               <input
@@ -130,21 +194,31 @@ const Manager = () => {
                 className="myInput "
                 placeholder="Enter Password"
                 name="password"
+                required
               />
               <span
-                className="absolute right-3 top-3 text-xl cursor-pointer "
+                className="absolute right-3 top-3 text-xl cursor-pointer bg-slate-200 p-2 rounded-full  "
                 onClick={handelShow}
               >
                 {show ? <IoEyeOff /> : <IoEye />}
               </span>
             </div>
           </div>
-          <button
-            className="bg-cyan-700 px-5 py-2 mt-5 w-fit border-0 rounded-full font-bold text-xl text-white hover:bg-cyan-600  flex gap-2 justify-center items-center "
-            onClick={handleSave}
-          >
-            <BiSave className="text-2xl" /> <span>Save</span>
-          </button>
+          {isUpdate ? (
+            <button
+              className="bg-cyan-700 px-5 py-2 mt-5 w-fit border-0 rounded-md font-bold text-xl text-white hover:bg-cyan-600  flex gap-2 justify-center items-center "
+              onClick={() => handleUpdate()}
+            >
+              Update
+            </button>
+          ) : (
+            <button
+              className="bg-cyan-700 px-5 py-2 mt-5 w-fit border-0 rounded- fonmdt-bold text-xl text-white hover:bg-cyan-600  flex gap-2 justify-center items-center "
+              onClick={handleSave}
+            >
+              <BiSave className="text-2xl" /> <span>Save</span>
+            </button>
+          )}
         </div>
 
         <div className="mt-10">
@@ -160,7 +234,7 @@ const Manager = () => {
                   <th className="py-2">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-cyan-50">
+              <tbody className="bg-cyan-100">
                 {passwordArray.map((item, index) => {
                   return (
                     <tr key={index}>
@@ -193,7 +267,7 @@ const Manager = () => {
                           />
                           <span
                             className="cursor-pointer"
-                            onClick={() => handleTablePassword(item.id)}
+                            onClick={() => handleTablePassword(item._id)}
                           >
                             {item.showPassword ? <IoEyeOff /> : <IoEye />}
                           </span>
@@ -203,11 +277,11 @@ const Manager = () => {
                         <div className="flex items-center justify-center gap-3 text-xl">
                           <FaRegEdit
                             className="cursor-pointer"
-                            onClick={() => handleEdit(item.id)}
+                            onClick={() => handleEdit(item._id)}
                           />
                           <MdDelete
                             className="cursor-pointer"
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => handleDelete(item._id)}
                           />
                         </div>
                       </td>

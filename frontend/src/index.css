@@ -4,6 +4,6 @@
 
 @layer components{
   .myInput{
-    @apply border-2 border-cyan-700 focus:outline-none   rounded-full px-4 py-1  w-full;
+    @apply border-2 border-cyan-700 focus:outline-none p-4 w-full rounded-lg;
   }
 }
