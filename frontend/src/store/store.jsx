@@ -42,7 +42,6 @@ const ContextProvider = ({ children }) => {
 
   const register = async (username, email, password) => {
     try {
-      console.log("register info: ", username, password, email);
       const { data } = await axios.post(
         `${server}users/register`,
         {
@@ -61,7 +60,6 @@ const ContextProvider = ({ children }) => {
       setisAuth(true);
       setrefresh(!refresh);
     } catch (error) {
-      console.log(error);
       toast.success(error.response.data.message);
       setisAuth(false);
     }
