@@ -1,37 +1,32 @@
-import { Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
-import ContextProvider, { Context } from "./store/store";
+import ContextProvider from "./store/store";
 import { Toaster } from "react-hot-toast";
-import { useContext, useEffect } from "react";
-import axios from "axios";
-import { server } from "./main";
+import Manager from "./pages/Manager";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
-  const { isAuth, user, setisAuth, setuser } = useContext(Context);
-  // console.log("point 0");
-
   return (
-    <>
-      <div className="bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
-        <Navbar />
-        <Toaster />
-        <div className="min-h-screen">
-          <Outlet />
+    <Router>
+      <ContextProvider>
+        <div className="bg-white bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]">
+          <Navbar />
+          <Toaster />
+          <div className="min-h-screen">
+            <Routes>
+              <Route path="/" element={<Manager />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+            </Routes>
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    </>
+      </ContextProvider>
+    </Router>
   );
 }
 
-function AppWrapper() {
-  return (
-    <ContextProvider>
-      <App />
-    </ContextProvider>
-  );
-}
-
-export default AppWrapper;
+export default App;
