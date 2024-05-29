@@ -41,7 +41,6 @@ export const updatePassword = async (req, res, next) => {
     if (!prevPassword) return next(new ErrorHandler("Site not found", 404));
 
     if (!req.body.site) {
-      console.log("showPassword clicked");
       prevPassword.showPassword = !prevPassword.showPassword;
     } else {
       (prevPassword.site = req.body.site),
